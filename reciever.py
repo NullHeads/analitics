@@ -1,7 +1,9 @@
 import pika
 import json
-from analys import analitics as anal
+from json import JSONEncoder
+from analys import analitics
 from sender import responce
+import numpy
 
 hostname = '89.108.70.10'  # Ip сервера
 port = 5672  # Порт
@@ -9,6 +11,10 @@ ReciveQueue = "DownStream"  # Поток получения
 ResponceQueue = "UpStream"  # Поток отправки
 
 
+def default(self, obj):
+    if isinstance(obj, numpy.ndarray):
+        return obj.tolist()
+    return JSONEncoder.default(self, obj)
 def parsing(data):
     print(data)
     paramArray = []  # Массив параметров
@@ -37,13 +43,17 @@ def reciever():
 
     def callback(ch, method, properties, body):
         parsingResult, Id_Array = parsing(json.loads(body))
-        resaultAnalytics = anal(parsingResult)
+        resaultAnalytics, shap_values = analitics(parsingResult)
+        print(shap_values)
+        lol_data = []
+
         ResponceData = []
         for i in range(len(Id_Array)):
-            ResponceData.append({"Id": int(Id_Array[i]), "BurnoutPercent" : float(resaultAnalytics[i][1])})
-            #ResponceData.append([int(Id_Array[i]), float(resaultAnalytics[i][1])])
-
-            # ResponceData.append({int(Id_Array[i]): float(resaultAnalytics[i][1])})
+            for k in shap_values[i]:
+                lol_data.append(str(k))
+            ResponceData.append(
+                {"Id": int(Id_Array[i]), "BurnoutPercent": float(resaultAnalytics[i][1]),
+                 "influence": lol_data})
             print(ResponceData)
         responce(ResponceData, hostname, ResponceQueue)
 
@@ -51,5 +61,6 @@ def reciever():
 
     print('Ожидание данных.')
     channel.start_consuming()
+
 
 reciever()

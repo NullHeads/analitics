@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import shap
 
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
@@ -7,7 +8,6 @@ from sklearn.model_selection import train_test_split
 
 def analitics(data_array):
     data = pd.read_csv("workers_data.csv")
-
     x = data.drop(['died', 'worker_id', 'date'], axis=1)
     y = data['died']
 
@@ -29,7 +29,7 @@ def analitics(data_array):
         seed=27).fit(x_train, y_train)
 
     # воспользуемся уже обученной моделью, чтобы сделать прогнозы
-    rf_predictions = xgb_model.predict(x_test)
+    # rf_predictions = xgb_model.predict(x_test)
 
     # создаём массив с данными, которые собираемся скормить модели для того, чтобы она предсказала выгорание
     personal_data = np.array(data_array)
@@ -37,7 +37,32 @@ def analitics(data_array):
     # передаём модели массив. На выходе получаем массив,
     # где первый элемент строки - вероятность не выгорания, 2 - вероятность, что выгорел
     # print(xgb_model.predict_proba(personal_data))
-    return xgb_model.predict_proba(personal_data)
+    burnout = xgb_model.predict_proba(personal_data)
+
+    feature_names = np.array(['TeamMembers',
+                              'DayAvTime',
+                              'TaskAmount',
+                              'NcomplitedTask',
+                              'AvgMess',
+                              'ProjectsAmount',
+                              'StekAmount',
+                              'SportPlayer'])
+    influence = []
+    # создаем объект explainer для нашей модели и обучающих данных
+    explainer = shap.Explainer(xgb_model, x_train)
+
+    # рассчитываем SHAP значения для новых данных
+    shap_values = explainer(personal_data)
+    #
+    # arr = shap_values.values[0]
+    # print(shap_values)
+    # # Получаем индексы топ-3 максимальных значений
+    # top_indexes = arr.argsort()[-3:][::-1]
+    # max_influence = feature_names[top_indexes[0]]
+    # middle_influence = feature_names[top_indexes[1]]
+    # low_influence = feature_names[top_indexes[2]]
+
+    return xgb_model.predict_proba(personal_data), shap_values.values
 
 
 if __name__ == '__main__':
