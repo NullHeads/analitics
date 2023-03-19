@@ -29,7 +29,7 @@ def analitics(data_array):
         seed=27).fit(x_train, y_train)
 
     # воспользуемся уже обученной моделью, чтобы сделать прогнозы
-    rf_predictions = xgb_model.predict(x_test)
+    # rf_predictions = xgb_model.predict(x_test)
 
     # создаём массив с данными, которые собираемся скормить модели для того, чтобы она предсказала выгорание
     personal_data = np.array(data_array)
