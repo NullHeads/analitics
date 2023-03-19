@@ -1,6 +1,6 @@
 import pika
 import json
-from analys import analitics as anal
+from analys import analitics
 from sender import responce
 
 hostname = '89.108.70.10'  # Ip сервера
@@ -37,7 +37,7 @@ def reciever():
 
     def callback(ch, method, properties, body):
         parsingResult, Id_Array = parsing(json.loads(body))
-        resaultAnalytics = anal(parsingResult)
+        resaultAnalytics = analitics(parsingResult)
         ResponceData = []
         for i in range(len(Id_Array)):
             ResponceData.append({"Id": int(Id_Array[i]), "BurnoutPercent" : float(resaultAnalytics[i][1])})
